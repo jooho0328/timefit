@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   });
   if (!group) return NextResponse.json({ error: "찾을 수 없습니다." }, { status: 404 });
 
-  const memberIds = group.members.map((m) => m.userId);
+  const memberIds = group.members.map((m: { userId: string }) => m.userId);
 
   const schedules = await db.schedule.findMany({
     where: {
