@@ -18,7 +18,7 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json(memberships.map((m: { group: unknown }) => m.group));
+  return NextResponse.json(memberships.map((m) => m.group));
 }
 
 export async function POST(req: NextRequest) {
