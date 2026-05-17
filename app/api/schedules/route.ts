@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+type TimeBlockInput = {
+  startMin: number;
+  endMin: number;
+  category: string;
+  label?: string;
+  color?: string;
+};
+
+function isTimeBlockInput(value: unknown): value is TimeBlockInput {
+  if (!value || typeof value !== "object") return false;
+  const block = value as Record<string, unknown>;
+  return (
+    typeof block.startMin === "number" &&
+    typeof block.endMin === "number" &&
+    typeof block.category === "string" &&
+    (block.label === undefined || typeof block.label === "string") &&
+    (block.color === undefined || typeof block.color === "string")
+  );
+}
+
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
@@ -23,6 +43,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const { date, blocks } = body as { date?: string; blocks?: unknown[] };
   if (!date) return NextResponse.json({ error: "날짜를 입력해주세요." }, { status: 400 });
+  const parsedBlocks = (blocks ?? []).filter(isTimeBlockInput);
 
   const existing = await db.schedule.findUnique({
     where: { userId_date: { userId: session.user.id, date } },
@@ -34,7 +55,7 @@ export async function POST(req: NextRequest) {
       where: { id: existing.id },
       data: {
         blocks: {
-          create: (blocks ?? []).map((b: { startMin: number; endMin: number; category: string; label?: string; color?: string }) => ({
+          create: parsedBlocks.map((b) => ({
             startMin: b.startMin,
             endMin: b.endMin,
             category: b.category,
@@ -53,7 +74,7 @@ export async function POST(req: NextRequest) {
       userId: session.user.id,
       date,
       blocks: {
-        create: (blocks ?? []).map((b: { startMin: number; endMin: number; category: string; label?: string; color?: string }) => ({
+        create: parsedBlocks.map((b) => ({
           startMin: b.startMin,
           endMin: b.endMin,
           category: b.category,
