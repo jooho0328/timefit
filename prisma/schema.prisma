@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password     String
+  name         String
+  createdAt    DateTime @default(now())
+
+  cash         Int      @default(0)
+  referralCode String   @unique
+  referredBy   String?
+
+  badge        String?  // equipped badge item id
+  activeTheme  String?  // equipped circle theme item id
+
+  schedules      Schedule[]
+  ownedGroups    Group[]       @relation("GroupOwner")
+  groups         GroupMember[]
+  purchases      UserPurchase[]
+}
+
+model UserPurchase {
+  id          String   @id @default(cuid())
+  userId      String
+  itemId      String
+  purchasedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId])
+}
+
+model Schedule {
+  id        String      @id @default(cuid())
+  userId    String
+  date      String
+  createdAt DateTime    @default(now())
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blocks         TimeBlock[]
+  groupSchedules GroupSchedule[]
+
+  @@unique([userId, date])
+}
+
+model TimeBlock {
+  id         String  @id @default(cuid())
+  scheduleId String
+  startMin   Int
+  endMin     Int
+  category   String
+  label      String?
+  color      String?
+
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  inviteToken String   @unique
+  ownerId     String
+  createdAt   DateTime @default(now())
+
+  owner          User            @relation("GroupOwner", fields: [ownerId], references: [id])
+  members        GroupMember[]
+  groupSchedules GroupSchedule[]
+}
+
+model GroupMember {
+  groupId  String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+}
+
+model GroupSchedule {
+  groupId    String
+  scheduleId String
+
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, scheduleId])
+}
