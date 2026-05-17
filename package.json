@@ -7,7 +7,10 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:push": "prisma db push --skip-generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
   },
   "engines": {
     "node": ">=20.19"

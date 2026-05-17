@@ -9,6 +9,13 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function buildAdapter() {
+  const tursoUrl = process.env.TURSO_DATABASE_URL;
+  const tursoToken = process.env.TURSO_AUTH_TOKEN;
+
+  if (tursoUrl) {
+    return new PrismaLibSql({ url: tursoUrl, authToken: tursoToken });
+  }
+
   const url = process.env.DATABASE_URL ?? "file:./dev.db";
 
   if (/^(libsql|https?):\/\//.test(url)) {
